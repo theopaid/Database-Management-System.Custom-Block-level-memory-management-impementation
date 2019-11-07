@@ -6,3 +6,10 @@ bf:
 	@echo " Compile bf_main ...";
 	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/bf_main.c -lbf -o ./build/runner -O2
 
+test1:
+	@echo " Compile test_1 ...";
+	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/test_1.c ./src/hash_file.c -lbf -o ./build/test1 -O2
+
+clear:
+	@echo " Cleaning data files ...";
+	rm ./build/data_test_1.db;

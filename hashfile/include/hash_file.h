@@ -36,7 +36,7 @@ HT_ErrorCode HT_CreateIndex(
  */
 HT_ErrorCode HT_OpenIndex(
 	const char *fileName, 		/* όνομα αρχείου */
-  int *indexDesc            /* θέση στον πίνακα με τα ανοιχτά αρχεία  που επιστρέφεται */
+  	int *indexDesc            /* θέση στον πίνακα με τα ανοιχτά αρχεία  που επιστρέφεται */
 	);
 
 /*
