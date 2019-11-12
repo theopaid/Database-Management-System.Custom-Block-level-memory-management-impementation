@@ -13,6 +13,7 @@ test1:
 clear:
 	@echo " Cleaning data files ...";
 	rm ./build/data_test_1.db;
+	
 cdata:
 	@echo " Cleaning data.db ...";
 	rm data.db;
