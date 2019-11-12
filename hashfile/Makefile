@@ -15,4 +15,4 @@ clear:
 	rm ./build/data_test_1.db;
 cdata:
 	@echo " Cleaning data.db ...";
-	rm ./build/data.db;
+	rm data.db;
