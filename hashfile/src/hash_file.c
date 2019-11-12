@@ -35,6 +35,7 @@ HT_ErrorCode HT_CreateIndex(const char *fileName, int buckets) {
   int file_desc;
   CALL_BF(BF_CreateFile(fileName));
   CALL_BF(BF_OpenFile(fileName, &file_desc));
+  printf("%d\n", file_desc);
 
   BF_Block *block;
   BF_Block_Init (&block);
@@ -250,6 +251,8 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
   return HT_OK;
 }
 
+
+
 HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
   if (id < 0 ) {
   	return HT_ERROR;
@@ -272,6 +275,11 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
   memcpy(&records, data, sizeof(int));
   memcpy(&next_block, data+sizeof(int), sizeof(int));
 
+  if(records == 0){
+  	printf("Error: bucket has 0 records.\n");
+	return HT_OK;
+  }
+
   Record *empty_record = (Record*)calloc(1, sizeof(Record));
   Record *record = (Record*)malloc(sizeof(Record));
   Record *replacer_record = (Record*)malloc(sizeof(Record));
@@ -283,7 +291,7 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 	int this_records = records;
   	int this_block = next_block;
 	int previous_block = bucket_position;
-
+		// ADD MAX_RECORD CHECK
 	while(this_block != 0 && this_records > 0){
 		previous_block = this_block;
 		CALL_BF(BF_UnpinBlock(block));
@@ -301,8 +309,8 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 		memcpy(&this_block, data+sizeof(int), sizeof(int));
 	}
 	memcpy(replacer_record, data+sizeof(int)*2+sizeof(Record)*(this_records-1), sizeof(Record));
-	memcpy(data+sizeof(int)*2+sizeof(Record)*(this_records-1), empty_record, sizeof(Record));
-	BF_Block_SetDirty(block);
+	//memcpy(data+sizeof(int)*2+sizeof(Record)*(this_records-1), empty_record, sizeof(Record));
+	//BF_Block_SetDirty(block);
 	CALL_BF(BF_UnpinBlock(block));
 	this_records--;
 	memcpy(data, &this_records, sizeof(int));
@@ -336,6 +344,7 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 		memcpy(&records, data, sizeof(int));
 		memcpy(&next_block, data+sizeof(int), sizeof(int));
 	} else {
+		//PRINT ID NOT FOUND AND EXIT WITH OK
 		return HT_ERROR;
 	}
   }
