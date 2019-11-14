@@ -98,7 +98,6 @@ HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc){
             return HT_ERROR;
     }
     memcpy(&table[*indexDesc], data+sizeof(char), sizeof(int));
-    printf("%d\n", table[*indexDesc]);
     CALL_BF(BF_UnpinBlock(block));
     return HT_OK;
 }
@@ -200,7 +199,9 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
                 data = BF_Block_GetData(block);
                 int records_num;
                 memcpy(&records_num, data, sizeof(int));
-		printf("==================== BLOCK: %d - RECORDS: %d ====================\n", i, records_num);
+                if(records_num <= 0)
+                    break;
+		        printf("==================== BLOCK: %d - RECORDS: %d ====================\n", i, records_num);
 
                 for (int j = 1; j <= records_num; j++) {
                         Record *rec;
@@ -271,34 +272,43 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
     BF_Block_Init(&block);
 
     int no_of_buckets = table[indexDesc];
+    if(no_of_buckets == 0)
+        return HT_OK;
     int bucket_position = hash(id, no_of_buckets);
 
     CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
+    printf("perase 1\n");
     data = BF_Block_GetData(block);
     int records;
     int next_block;
     memcpy(&records, data, sizeof(int));
     memcpy(&next_block, data+sizeof(int), sizeof(int));
+    printf("perase 2\n");
 
     if(records == 0){
             printf("Error: bucket has 0 records.\n");
         return HT_ERROR;
     }
+    printf("perase 3\n");
 
     Record *record = (Record*)malloc(sizeof(Record));
     Record *replacer_record = (Record*)malloc(sizeof(Record));
 
     int flag = 0;
     while( flag == 0 ){
+        printf("perase 4\n");
     	for(int i = 0; i < records; i++){
 		memcpy(record, data+sizeof(int)*2+sizeof(Record)*i, sizeof(Record));
 		if (record->id == id) {
+            printf("perase 5\n");
 			// We found the record to delete.
 			if (records == 1){
+                printf("perase 6\n");
 				// If we only have one record, meaning there is no other to replace it, simply decrease the number of records in the block.
 				records--;
 				memcpy(data, &records, sizeof(int));
 			} else {
+                printf("perase 7\n");
 				// Else, we need to find the last record in the bucket, remove that and place it in the record's position.
 				Record *replacer_record = (Record*)malloc(sizeof(Record));
 
@@ -313,38 +323,50 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 				int previous_block = bucket_position;
 				memcpy(&this_records, data2, sizeof(int));
 				memcpy(&this_block, data2+sizeof(int), sizeof(int));
+                printf("perase 7.1\n");
 				
 				while(this_block != 0 && this_records == MAX_RECORDS) {
+                    printf("perase 7.2\n");
 					previous_block = this_block;
 					CALL_BF(BF_UnpinBlock(block2));
 					CALL_BF(BF_GetBlock(indexDesc, this_block, block2));
 					data2 = BF_Block_GetData(block2);
 					memcpy(&this_records, data2, sizeof(int));
 					memcpy(&this_block, data2+sizeof(int), sizeof(int));
+                    printf("records inside = %d\n", this_records);
+                    printf("next block = %d\n", this_block);
+                    printf("perase 7.3\n");
 				}
 				if(this_records == 0){
+                    printf("perase 7.4\n");
 					CALL_BF(BF_UnpinBlock(block2));
 					CALL_BF(BF_GetBlock(indexDesc, previous_block, block2));
 					data2 = BF_Block_GetData(block2);
 					memcpy(&this_records, data2, sizeof(int));
 					memcpy(&this_block, data2, sizeof(int));
+                    printf("perase 7.5\n");
 				}
-
+                printf("perase 7.6\n");
 				memcpy(replacer_record, data2+sizeof(int)*2+sizeof(Record)*(this_records-1), sizeof(Record));
 				this_records--;
 				memcpy(data2, &this_records, sizeof(int));
 				BF_Block_SetDirty(block2);
 				CALL_BF(BF_UnpinBlock(block2));
+                printf("perase 7.7\n");
 
 				// We now have the last record in replacer_record.
 				memcpy(data+sizeof(int)*2+sizeof(Record)*i, replacer_record, sizeof(Record));
+                printf("perase 7.8\n");
 			}
 			// In both cases, we altered the block.
 			BF_Block_SetDirty(block);
+            printf("perase 7.9\n");
 			CALL_BF(BF_UnpinBlock(block));
+            printf("perase 7.10\n");
 			flag = 1;
 		}
 		if(flag == 1){
+            printf("perase 8\n");
 			// Job is done.
 			free(record);
 			free(replacer_record);
@@ -353,6 +375,7 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 		}
 	}
 	if(next_block != 0){
+        printf("perase 9\n");
 		CALL_BF(BF_UnpinBlock(block));
 		CALL_BF(BF_GetBlock(indexDesc, next_block, block));
 		data = BF_Block_GetData(block);
