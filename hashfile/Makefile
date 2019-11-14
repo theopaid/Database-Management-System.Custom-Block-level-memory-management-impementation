@@ -13,6 +13,10 @@ test1:
 hp1:
 	@echo " Compile hp_test1 ...";
 	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/hp_mainTest1.c ./src/hash_file.c -lbf -o ./build/hp1 -O2
+	
+diff_buckets:
+	@echo " Compile diff_buckets ...";
+	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/diff_buckets.c ./src/hash_file.c -lbf -o ./build/runner -O2
 
 clear:
 	@echo " Cleaning data files ...";
