@@ -10,6 +10,10 @@ test1:
 	@echo " Compile test_1 ...";
 	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/test_1.c ./src/hash_file.c -lbf -o ./build/test1 -O2
 
+hp1:
+	@echo " Compile hp_test1 ...";
+	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/hp_mainTest1.c ./src/hash_file.c -lbf -o ./build/hp1 -O2
+
 clear:
 	@echo " Cleaning data files ...";
 	rm ./build/data_test_1.db;
