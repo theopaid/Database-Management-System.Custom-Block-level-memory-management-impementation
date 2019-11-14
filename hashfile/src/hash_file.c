@@ -37,7 +37,7 @@ HT_ErrorCode HT_CreateIndex(const char *fileName, int buckets) {
     int file_desc;
     CALL_BF(BF_CreateFile(fileName));
     CALL_BF(BF_OpenFile(fileName, &file_desc));
-    printf("%d\n", file_desc);
+    //printf("%d\n", file_desc);
 
     BF_Block *block;
     BF_Block_Init (&block);
@@ -108,10 +108,73 @@ int hash(int key, int seed){
     return key%seed + 1;
 }
 
+/**
+ * To InsertEntry in the file all that needs to be done is:
+ * 	1. Find its bucket.
+ * 	2. Find the position (last record in the bucket).
+ * 	3. Insert the record to that position.
+ * If there is a need to allocate a new block to the bucket, make sure to chain it with the previous one.
+ */
 HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     // Read the number of buckets in the file. The bucket where the record should be inserted is given throught the hash function.
     // In this implementation the hash function uses the number of buckets: hash = id MOD no_of_buckets.
 
+    char *data;
+    BF_Block *block;
+    BF_Block_Init(&block);
+    int buckets_number;
+
+    // The number of buckets is stored in the first block of the hashfile.
+    CALL_BF(BF_GetBlock(indexDesc, 0, block));
+    data = BF_Block_GetData(block);
+    memcpy(&buckets_number, data+sizeof(char), sizeof(int));
+    CALL_BF(BF_UnpinBlock(block));
+
+    int bucket_position = hash(record.id, buckets_number);
+
+    // We need to find the last position where we add the record.
+    int records;
+    int next_block;
+    int previous_block = bucket_position;
+    CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
+    data = BF_Block_GetData(block);
+    memcpy(&records, data, sizeof(int));
+    memcpy(&next_block, data+sizeof(int), sizeof(int));
+
+    // Each time we know there exists a next_block and our block is full, we have to follow to that block, until we find the end.
+    while(next_block != 0 && records == MAX_RECORDS){
+	    CALL_BF(BF_UnpinBlock(block));
+	    CALL_BF(BF_GetBlock(indexDesc, next_block, block));
+	    data = BF_Block_GetData(block);
+	    memcpy(&records, data, sizeof(int));
+	    memcpy(&next_block, data+sizeof(int), sizeof(int));
+    }
+    // When there is no next_block, but our records are maxxed out, we have to allocate a new block and 'link' it.
+    if(records == MAX_RECORDS){
+	int blocks_number;
+    	CALL_BF(BF_GetBlockCounter(indexDesc, &blocks_number));
+	memcpy(data+sizeof(int), &blocks_number, sizeof(int));
+	BF_Block_SetDirty(block);
+	CALL_BF(BF_UnpinBlock(block));
+
+	records = 1;
+	next_block = 0;
+	CALL_BF(BF_AllocateBlock(indexDesc, block));
+	data = BF_Block_GetData(block);
+	memcpy(data, &records, sizeof(int));
+	memcpy(data+sizeof(int), &next_block, sizeof(int));
+    } else {
+    	// Otherwise, use this trick to increment the number of records in the block where the record will be added.
+	records++;
+	memcpy(data, &records, sizeof(int));
+    }
+
+    // All that remains, is to place the record in the correct position, meaning underneath all records.
+    memcpy(data+sizeof(int)*2+sizeof(Record)*(records-1), &record, sizeof(Record));
+    BF_Block_SetDirty(block);
+    CALL_BF(BF_UnpinBlock(block));
+
+    /*
     char *myBlockData;
     int bucketSum;
     BF_Block *myBlock, *newBlock;
@@ -197,7 +260,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
             CALL_BF(BF_UnpinBlock(myBlock));
             break;
         }
-    }
+    }*/
 
 
     /*int records;
@@ -294,14 +357,14 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
 
         CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
         data = BF_Block_GetData(block);
-        //int flag = 0;
+        int flag = 0;
         int records;
         int next_block;
         Record *record;
         record = (Record*)malloc(sizeof(Record));
         memcpy(&records, data, sizeof(int));
         memcpy(&next_block, data+sizeof(int), sizeof(int));
-        //while( flag == 0 ){
+        while( flag == 0 ){
                 for( int i = 0; i < records; i++ ){
                         memcpy(record, data+sizeof(int)*2+sizeof(Record)*i, sizeof(Record));
                         if( record->id == *id ){
@@ -321,7 +384,7 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
                         CALL_BF(BF_UnpinBlock(block));
                         return HT_OK;
                 }
-        //}
+        }
         free(record);
         CALL_BF(BF_UnpinBlock(block));
     }
@@ -342,6 +405,9 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
     BF_Block *block;
     BF_Block_Init(&block);
 
+    int blockss;
+    CALL_BF(BF_GetBlockCounter(indexDesc, &blockss));
+    printf("%d\n", blockss);
     CALL_BF(BF_GetBlock(indexDesc, 0, block));
     data = BF_Block_GetData(block);
     int no_of_buckets;
@@ -364,11 +430,12 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
     Record *record = (Record*)malloc(sizeof(Record));
     Record *replacer_record = (Record*)malloc(sizeof(Record));
 
-    //int flag = 0;
-    //while( flag == 0 ){
+    int flag = 0;
+    while( flag == 0 ){
     	for(int i = 0; i < records; i++){
-		memcpy(record, data+sizeof(int)*+sizeof(Record)*i, sizeof(Record));
-		if (record.id == id) {
+		memcpy(record, data+sizeof(int)*2+sizeof(Record)*i, sizeof(Record));
+		printf("%d\n", record->id);
+		if (record->id == id) {
 			// We found the record to delete.
 			if (records == 1){
 				// If we only have one record, meaning there is no other to replace it, simply decrease the number of records in the block.
@@ -386,7 +453,7 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 				data2 = BF_Block_GetData(block2);
 				int this_records;
 				int this_block;
-				int previous block = bucket_position;
+				int previous_block = bucket_position;
 				memcpy(&this_records, data2, sizeof(int));
 				memcpy(&this_block, data2+sizeof(int), sizeof(int));
 
@@ -403,7 +470,7 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 					CALL_BF(BF_GetBlock(indexDesc, previous_block, block2));
 					data2 = BF_Block_GetData(block2);
 					memcpy(&this_records, data2, sizeof(int));
-					mempcy(&this_block, data2, sizeof(int));
+					memcpy(&this_block, data2, sizeof(int));
 				}
 				memcpy(replacer_record, data2+sizeof(int)*2+sizeof(Record)*(this_records-1), sizeof(Record));
 				this_records--;
@@ -412,31 +479,40 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 				CALL_BF(BF_UnpinBlock(block2));
 
 				// We now have the last record in replacer_record.
-				memcpy(data+sizeof(int)*2+sizeof(Record)*i, replacer_records, sizeof(Record));
+				memcpy(data+sizeof(int)*2+sizeof(Record)*i, replacer_record, sizeof(Record));
 				BF_Block_SetDirty(block);
 				CALL_BF(BF_UnpinBlock(block));
 			}
-			//flag = 1;
-			//break;
-		//if(flag == 1){
+			flag = 1;
+		}
+		if(flag == 1){
 			// Job is done.
 			free(record);
 			free(replacer_record);
 			return HT_OK;
-			//break;
-		}
-
-		if(next_block != 0){
-			CALL_BF(BF_UnpinBlock(block));
-			CALL_BF(BF_GetBlock(indexDesc, next_block, block));
-			data = BF_Block_GetData(block);
-			memcpy(&records, data, sizeof(int));
-			memcpy(&next_block, data+sizeof(int), sizeof(int));
-		} else {
-			printf("Error: The id %d, could not be found\n", id);
-			return HT_ERROR;
+			break;
 		}
 	}
-   // }
+	if(flag == 1){
+		// Job is done.
+		free(record);
+		free(replacer_record);
+		return HT_OK;
+		break;
+	}
+
+	if(next_block != 0){
+		CALL_BF(BF_UnpinBlock(block));
+		CALL_BF(BF_GetBlock(indexDesc, next_block, block));
+		data = BF_Block_GetData(block);
+		memcpy(&records, data, sizeof(int));
+		memcpy(&next_block, data+sizeof(int), sizeof(int));
+	} else {
+		printf("Error: The id %d, could not be found\n", id);
+		return HT_ERROR;
+	}
+	
+    }
+    //printf("ERROR: The id %d, could not be found\n", id);
     return HT_OK;
 }
