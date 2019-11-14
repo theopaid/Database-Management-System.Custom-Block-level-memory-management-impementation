@@ -405,9 +405,6 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
     BF_Block *block;
     BF_Block_Init(&block);
 
-    int blockss;
-    CALL_BF(BF_GetBlockCounter(indexDesc, &blockss));
-    printf("%d\n", blockss);
     CALL_BF(BF_GetBlock(indexDesc, 0, block));
     data = BF_Block_GetData(block);
     int no_of_buckets;
@@ -434,7 +431,6 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
     while( flag == 0 ){
     	for(int i = 0; i < records; i++){
 		memcpy(record, data+sizeof(int)*2+sizeof(Record)*i, sizeof(Record));
-		printf("%d\n", record->id);
 		if (record->id == id) {
 			// We found the record to delete.
 			if (records == 1){
@@ -456,14 +452,14 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 				int previous_block = bucket_position;
 				memcpy(&this_records, data2, sizeof(int));
 				memcpy(&this_block, data2+sizeof(int), sizeof(int));
-
+				
 				while(this_block != 0 && this_records == MAX_RECORDS) {
 					previous_block = this_block;
 					CALL_BF(BF_UnpinBlock(block2));
 					CALL_BF(BF_GetBlock(indexDesc, this_block, block2));
 					data2 = BF_Block_GetData(block2);
 					memcpy(&this_records, data2, sizeof(int));
-					memcpy(&this_block, data2, sizeof(int));
+					memcpy(&this_block, data2+sizeof(int), sizeof(int));
 				}
 				if(this_records == 0){
 					CALL_BF(BF_UnpinBlock(block2));
@@ -472,6 +468,7 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 					memcpy(&this_records, data2, sizeof(int));
 					memcpy(&this_block, data2, sizeof(int));
 				}
+
 				memcpy(replacer_record, data2+sizeof(int)*2+sizeof(Record)*(this_records-1), sizeof(Record));
 				this_records--;
 				memcpy(data2, &this_records, sizeof(int));
@@ -480,9 +477,10 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 
 				// We now have the last record in replacer_record.
 				memcpy(data+sizeof(int)*2+sizeof(Record)*i, replacer_record, sizeof(Record));
-				BF_Block_SetDirty(block);
-				CALL_BF(BF_UnpinBlock(block));
 			}
+			// In both cases, we altered the block.
+			BF_Block_SetDirty(block);
+			CALL_BF(BF_UnpinBlock(block));
 			flag = 1;
 		}
 		if(flag == 1){
@@ -493,14 +491,6 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 			break;
 		}
 	}
-	if(flag == 1){
-		// Job is done.
-		free(record);
-		free(replacer_record);
-		return HT_OK;
-		break;
-	}
-
 	if(next_block != 0){
 		CALL_BF(BF_UnpinBlock(block));
 		CALL_BF(BF_GetBlock(indexDesc, next_block, block));
@@ -513,6 +503,5 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 	}
 	
     }
-    //printf("ERROR: The id %d, could not be found\n", id);
     return HT_OK;
 }
