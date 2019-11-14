@@ -133,15 +133,8 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     char *data;
     BF_Block *block;
     BF_Block_Init(&block);
-    /*
-    int buckets_number;
 
     // The number of buckets is stored in the first block of the hashfile.
-    CALL_BF(BF_GetBlock(indexDesc, 0, block));
-    data = BF_Block_GetData(block);
-    memcpy(&buckets_number, data+sizeof(char), sizeof(int));
-    CALL_BF(BF_UnpinBlock(block));
-    */
     int buckets_number = table[indexDesc];
     int bucket_position = hash(record.id, buckets_number);
 
@@ -187,144 +180,6 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     BF_Block_SetDirty(block);
     CALL_BF(BF_UnpinBlock(block));
 
-    /*
-    char *myBlockData;
-    int bucketSum;
-    BF_Block *myBlock, *newBlock;
-    BF_Block_Init(&myBlock);
-    BF_Block_Init(&newBlock);
-    //int max_records = (BF_BLOCK_SIZE-sizeof(int)*2)/sizeof(Record);
-
-    // The number of buckets is stored in the first block of the hashfile.
-    CALL_BF(BF_GetBlock(indexDesc, 0, myBlock));
-    myBlockData = BF_Block_GetData(myBlock);
-    memcpy(&bucketSum, myBlockData+sizeof(char), sizeof(int));
-    CALL_BF(BF_UnpinBlock(myBlock));
-
-    int bucketPos = hash(record.id, bucketSum);
-    printf("bucketPos%d\n", bucketPos);
-    //printf("%d\n", bucket_position);
-    
-    int recordsInBlock;
-    int connectedBlock;
-    int previousBlock = bucketPos;
-    int blockNum;
-    CALL_BF(BF_GetBlock(indexDesc, bucketPos, myBlock));
-    myBlockData = BF_Block_GetData(myBlock);
-    //memcpy(&recordsInBlock, myBlockData, sizeof(int));
-    //memcpy(&connectedBlock, myBlockData+sizeof(int), sizeof(int));
-
-    int recordsInBlockInit = 0;
-    int connectedBlockInit = 0;
-    //printf("spera\n");
-
-    while (1)
-    {
-        memcpy(&recordsInBlock, myBlockData, sizeof(int));
-        memcpy(&connectedBlock, myBlockData+sizeof(int), sizeof(int));
-
-        if(recordsInBlock == MAX_RECORDS)
-        {
-            if(connectedBlock == 0) // Create new Block
-            {
-                printf("mpike1\n");
-                // Creation of new block, link to it, setdirty, unpin last block
-                // make myBlockData show the connected block
-                // continue;
-                //BF_Block_Init(&newBlock);
-                CALL_BF(BF_AllocateBlock(indexDesc, newBlock));
-                CALL_BF(BF_GetBlockCounter(indexDesc, &blockNum));
-                printf("blockNum%d\n", blockNum);
-                memcpy(myBlockData+sizeof(int), &blockNum, sizeof(int));
-                BF_Block_SetDirty(myBlock);
-                CALL_BF(BF_UnpinBlock(myBlock));
-                myBlockData = BF_Block_GetData(newBlock);
-                myBlock = newBlock;
-                memcpy(myBlockData, &recordsInBlockInit, sizeof(int));
-                memcpy(myBlockData+sizeof(int), &connectedBlockInit, sizeof(int));
-                continue;
-            }
-            else
-            {
-                printf("mpike2\n");
-                printf("connected%d\n", connectedBlock);
-                // make myBlockData show the connected block, unpin previous block
-                // continue; (in this case newBlock stands for nextBlock)
-                CALL_BF(BF_GetBlock(indexDesc, connectedBlock, newBlock));
-                myBlockData = BF_Block_GetData(newBlock);
-                CALL_BF(BF_UnpinBlock(myBlock));
-                myBlock = newBlock;
-                continue;
-            }
-        }
-        else
-        {
-            printf("mpike3\n");
-            // memcpy the new record
-            // up 1 the recordsInBlock
-            // setdirty and unpin
-            // break;
-            memcpy(myBlockData+sizeof(int)*2+recordsInBlock*sizeof(Record), &record, sizeof(Record));
-            recordsInBlock++;
-            printf("%d\n", recordsInBlock);
-            printf("%d\n", record.id);
-            memcpy(myBlockData, &recordsInBlock, sizeof(int));
-            BF_Block_SetDirty(myBlock);
-            CALL_BF(BF_UnpinBlock(myBlock));
-            break;
-        }
-    }*/
-
-
-    /*int records;
-    int next_block;
-    int previous_block = bucket_position;
-    CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
-    data = BF_Block_GetData(block);
-    memcpy(&records, data, sizeof(int));
-    memcpy(&next_block, data+sizeof(int), sizeof(int));
-
-    while(next_block != 0 && records != 0){
-        previous_block = next_block;
-        CALL_BF(BF_UnpinBlock(block));
-            CALL_BF(BF_GetBlock(indexDesc, next_block, block));
-        data = BF_Block_GetData(block);
-        memcpy(&records, data, sizeof(int));
-        memcpy(&next_block, data+sizeof(int), sizeof(int));
-    }
-    if( records == 0) {
-            next_block = previous_block;
-        CALL_BF(BF_UnpinBlock(block));
-        CALL_BF(BF_GetBlock(indexDesc, next_block, block));
-        data = BF_Block_GetData(block);
-        memcpy(&records, data, sizeof(int));
-        memcpy(&next_block, data+sizeof(int), sizeof(int));
-    }
-
-    if( records >= MAX_RECORDS ){
-        int blocks_num;
-            CALL_BF(BF_GetBlockCounter(indexDesc, &blocks_num));
-        memcpy(data+sizeof(int), &blocks_num, sizeof(int));
-        BF_Block_SetDirty(block);
-        CALL_BF(BF_UnpinBlock(block));
-
-        records = 1;
-        next_block = 0;
-        CALL_BF(BF_AllocateBlock(indexDesc, block));
-        data = BF_Block_GetData(block);
-        memcpy(data, &records, sizeof(int));
-        memcpy(data+sizeof(int), &next_block, sizeof(int));
-        memcpy(data+sizeof(int)*2, &record, sizeof(Record));
-        BF_Block_SetDirty(block);
-        CALL_BF(BF_UnpinBlock(block));
-    } else {
-            memcpy(data+sizeof(int)*2+records*sizeof(Record), &record, sizeof(Record));
-        records++;
-        memcpy(data, &records, sizeof(int));
-        BF_Block_SetDirty(block);
-        CALL_BF(BF_UnpinBlock(block));
-    }*/
-
     return HT_OK;
 }
 
@@ -340,12 +195,12 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
         BF_Block_Init(&block);
         int blocks_num;
         CALL_BF(BF_GetBlockCounter(indexDesc, &blocks_num));
-
         for (int i = 1; i <= blocks_num-1; i++){
                 CALL_BF(BF_GetBlock(indexDesc, i, block));
                 data = BF_Block_GetData(block);
                 int records_num;
                 memcpy(&records_num, data, sizeof(int));
+		printf("==================== BLOCK: %d - RECORDS: %d ====================\n", i, records_num);
 
                 for (int j = 1; j <= records_num; j++) {
                         Record *rec;
@@ -361,18 +216,10 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
         BF_Block *block;
         BF_Block_Init(&block);
         int no_of_buckets;
-	/*
-        CALL_BF(BF_GetBlock(indexDesc, 0, block));
-        data = BF_Block_GetData(block);
-        memcpy(&no_of_buckets, data+sizeof(char), sizeof(int));
-	*/
 
 	no_of_buckets = table[indexDesc];
         int bucket_position = hash(*id, no_of_buckets);
-    
-	//CALL_BF(BF_UnpinBlock(block));
 	
-	//no_of_buckets = table[indexDesc];
         CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
         data = BF_Block_GetData(block);
         int flag = 0;
@@ -423,15 +270,8 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
     BF_Block *block;
     BF_Block_Init(&block);
 
-    /*
-    CALL_BF(BF_GetBlock(indexDesc, 0, block));
-    data = BF_Block_GetData(block);
-    int no_of_buckets;
-    memcpy(&no_of_buckets, data+sizeof(char), sizeof(int));
-    */
     int no_of_buckets = table[indexDesc];
     int bucket_position = hash(id, no_of_buckets);
-    //CALL_BF(BF_UnpinBlock(block));
 
     CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
     data = BF_Block_GetData(block);
