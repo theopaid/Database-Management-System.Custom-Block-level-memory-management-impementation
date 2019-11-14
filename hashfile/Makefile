@@ -18,6 +18,10 @@ diff_buckets:
 	@echo " Compile diff_buckets ...";
 	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/diff_buckets.c ./src/hash_file.c -lbf -o ./build/runner -O2
 
+same_file:
+	@echo " Compile same_file.c ....";
+	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/same_file.c ./src/hash_file.c -lbf -o ./build/runner -O2
+
 clear:
 	@echo " Cleaning data files ...";
 	rm ./build/data_test_1.db;
