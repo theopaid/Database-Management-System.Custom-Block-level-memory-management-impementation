@@ -99,7 +99,7 @@ int main() {
         }
 
         printf("RUN PrintAllEntries\n");
-	printf("|||||||||||||||||||||||||||||||||  FILE %d  |||||||||||||||||||||||||||||||||\n", fileNameCounter);
+	    printf("|||||||||||||||||||||||||||||||||  FILE %d  |||||||||||||||||||||||||||||||||\n", fileNameCounter);
         int id = rand() % RECORDS_NUM;
         //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
