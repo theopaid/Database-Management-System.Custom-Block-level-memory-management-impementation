@@ -21,10 +21,14 @@ diff_buckets:
 same_file:
 	@echo " Compile same_file.c ....";
 	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/same_file.c ./src/hash_file.c -lbf -o ./build/runner -O2
+	
+randRecords_delAll.c:
+	@echo " Compile randRecords_delAll.c ..."
+	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/randRecords_delAll.c ./src/hash_file.c -lbf -o ./build/runner -O2
 
 clear:
 	@echo " Cleaning data files ...";
-	rm ./build/data_test_1.db;
+	rm data*.db;
 	
 cdata:
 	@echo " Cleaning data.db ...";
