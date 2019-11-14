@@ -9,6 +9,7 @@
 #define RECORDS_NUM 1700 // you can change it if you want
 //#define BUCKETS_NUM 13  // you can change it if you want
 #define FILE_NAME "data.db"
+#define MAX_OPEN_FILES 20
 
 const char* names[] = {
     "Yannis",
@@ -74,7 +75,7 @@ int main() {
     srand(time(NULL)); //randomize maximum buckets
     CALL_OR_DIE(HT_CreateIndex(fileName, maxBuckets));
 
-    for(int i = 1; i <= BF_MAX_OPEN_FILES; i++) {
+    for(int i = 0; i < MAX_OPEN_FILES; i++) {
         //maxBuckets = rand() % 20 + 1;
  
         printf("%s\n", fileName);
@@ -82,24 +83,27 @@ int main() {
         CALL_OR_DIE(HT_OpenIndex(fileName, &indexDesc));
         //printf("maxBuckets=%d\n", maxBuckets);
 
-        Record record;
-        int r;
-        printf("Insert Entries\n");
-        for (int id = 0; id < RECORDS_NUM; ++id) {
-            record.id = id;
-            r = rand() % 12;
-            memcpy(record.name, names[r], strlen(names[r]) + 1);
-            r = rand() % 12;
-            memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
-            r = rand() % 10;
-            memcpy(record.city, cities[r], strlen(cities[r]) + 1);
-            //printf("%s\n", record.city);
+        if(i == 0) {
 
-            CALL_OR_DIE(HT_InsertEntry(indexDesc, record));
+            Record record;
+            int r;
+            printf("Insert Entries\n");
+            for (int id = 0; id < RECORDS_NUM; ++id) {
+                record.id = id;
+                r = rand() % 12;
+                memcpy(record.name, names[r], strlen(names[r]) + 1);
+                r = rand() % 12;
+                memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
+                r = rand() % 10;
+                memcpy(record.city, cities[r], strlen(cities[r]) + 1);
+                //printf("%s\n", record.city);
+
+                CALL_OR_DIE(HT_InsertEntry(indexDesc, record));
+            }
         }
 
         printf("RUN PrintAllEntries\n");
-	printf("|||||||||||||||||||||||||||||||||  FILE %d  |||||||||||||||||||||||||||||||||\n", indexDesc);
+	    printf("|||||||||||||||||||||||||||||||||  FILE %d  |||||||||||||||||||||||||||||||||\n", indexDesc);
         int id = rand() % RECORDS_NUM;
         //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
@@ -108,33 +112,15 @@ int main() {
         CALL_OR_DIE(HT_DeleteEntry(indexDesc, id));
         printf("Print Entry with id = %d\n", id); 
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id)); // must print something like : Entry doesn't exist or nothing at all
-
+        printf("max files %d\n", MAX_OPEN_FILES);
     }
 
     //Let's close one file and then add another
     CALL_OR_DIE(HT_CloseFile(2));
 
-    maxBuckets = rand() % 20 + 1;
     printf("%s\n", fileName);
-    //CALL_OR_DIE(HT_CreateIndex(fileName, maxBuckets));
+    
     CALL_OR_DIE(HT_OpenIndex(fileName, &indexDesc));
-    printf("maxBuckets=%d\n", maxBuckets);
-
-    Record record;
-    int r;
-    printf("Insert Entries\n");
-    for (int id = 0; id < RECORDS_NUM; ++id) {
-        record.id = id;
-        r = rand() % 12;
-        memcpy(record.name, names[r], strlen(names[r]) + 1);
-        r = rand() % 12;
-        memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
-        r = rand() % 10;
-        memcpy(record.city, cities[r], strlen(cities[r]) + 1);
-        //printf("%s\n", record.city);
-
-        CALL_OR_DIE(HT_InsertEntry(indexDesc, record));
-    }
 
     printf("RUN PrintAllEntries\n");
     printf("||||||||||||||||||||||||||||||||||||||  FILE: %d ||||||||||||||||||||||||||||||\n", indexDesc);
@@ -148,7 +134,7 @@ int main() {
     CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id)); // must print something like : Entry doesn't exist or nothing at all
 
     // Closing all 5 files created
-    for(int i = 0; i <= 4; i++) {
+    for(int i = 0; i < MAX_OPEN_FILES; i++) {
         CALL_OR_DIE(HT_CloseFile(i));
     }
     BF_Close();
