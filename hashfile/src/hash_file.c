@@ -6,7 +6,7 @@
 #include "hash_file.h"
 #define MAX_OPEN_FILES 20
 
-int table[MAX_OPEN_FILES];
+int table[MAX_OPEN_FILES] = { 0 };
 
 
 #define CALL_BF(call)       \
@@ -98,7 +98,7 @@ HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc){
             return HT_ERROR;
     }
     memcpy(&table[*indexDesc], data+sizeof(char), sizeof(int));
-    //printf("%d\n", table[*indexDesc]);
+    printf("%d\n", table[*indexDesc]);
     CALL_BF(BF_UnpinBlock(block));
     return HT_OK;
 }
@@ -108,6 +108,7 @@ HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc){
  */
 HT_ErrorCode HT_CloseFile(int indexDesc) {
     CALL_BF(BF_CloseFile(indexDesc));
+    table[indexDesc] = 0;
     return HT_OK;
 }
 
