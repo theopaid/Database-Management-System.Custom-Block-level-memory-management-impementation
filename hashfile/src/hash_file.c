@@ -6,6 +6,9 @@
 #include "hash_file.h"
 #define MAX_OPEN_FILES 20
 
+int table[MAX_OPEN_FILES];
+
+
 #define CALL_BF(call)       \
 {                           \
     BF_ErrorCode code = call; \
@@ -38,7 +41,7 @@ HT_ErrorCode HT_CreateIndex(const char *fileName, int buckets) {
     CALL_BF(BF_CreateFile(fileName));
     CALL_BF(BF_OpenFile(fileName, &file_desc));
     //printf("%d\n", file_desc);
-
+    
     BF_Block *block;
     BF_Block_Init (&block);
 
@@ -79,6 +82,11 @@ HT_ErrorCode HT_CreateIndex(const char *fileName, int buckets) {
 HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc){
     CALL_BF(BF_OpenFile(fileName, indexDesc));
 
+    if(*indexDesc >= MAX_OPEN_FILES){
+    	printf("Error: too many opened files.\n");
+	return HT_ERROR;
+    }
+
     char *data;
     BF_Block *block;
     BF_Block_Init(&block);
@@ -89,6 +97,8 @@ HT_ErrorCode HT_OpenIndex(const char *fileName, int *indexDesc){
     if (*data != '*'){
             return HT_ERROR;
     }
+    memcpy(&table[*indexDesc], data+sizeof(char), sizeof(int));
+    //printf("%d\n", table[*indexDesc]);
     CALL_BF(BF_UnpinBlock(block));
     return HT_OK;
 }
@@ -122,6 +132,7 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     char *data;
     BF_Block *block;
     BF_Block_Init(&block);
+    /*
     int buckets_number;
 
     // The number of buckets is stored in the first block of the hashfile.
@@ -129,7 +140,8 @@ HT_ErrorCode HT_InsertEntry(int indexDesc, Record record) {
     data = BF_Block_GetData(block);
     memcpy(&buckets_number, data+sizeof(char), sizeof(int));
     CALL_BF(BF_UnpinBlock(block));
-
+    */
+    int buckets_number = table[indexDesc];
     int bucket_position = hash(record.id, buckets_number);
 
     // We need to find the last position where we add the record.
@@ -348,13 +360,18 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
         BF_Block *block;
         BF_Block_Init(&block);
         int no_of_buckets;
-
+	/*
         CALL_BF(BF_GetBlock(indexDesc, 0, block));
         data = BF_Block_GetData(block);
         memcpy(&no_of_buckets, data+sizeof(char), sizeof(int));
-        int bucket_position = hash(*id, no_of_buckets);
-        CALL_BF(BF_UnpinBlock(block));
+	*/
 
+	no_of_buckets = table[indexDesc];
+        int bucket_position = hash(*id, no_of_buckets);
+    
+	//CALL_BF(BF_UnpinBlock(block));
+	
+	//no_of_buckets = table[indexDesc];
         CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
         data = BF_Block_GetData(block);
         int flag = 0;
@@ -405,12 +422,15 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
     BF_Block *block;
     BF_Block_Init(&block);
 
+    /*
     CALL_BF(BF_GetBlock(indexDesc, 0, block));
     data = BF_Block_GetData(block);
     int no_of_buckets;
     memcpy(&no_of_buckets, data+sizeof(char), sizeof(int));
+    */
+    int no_of_buckets = table[indexDesc];
     int bucket_position = hash(id, no_of_buckets);
-    CALL_BF(BF_UnpinBlock(block));
+    //CALL_BF(BF_UnpinBlock(block));
 
     CALL_BF(BF_GetBlock(indexDesc, bucket_position, block));
     data = BF_Block_GetData(block);
@@ -499,7 +519,7 @@ HT_ErrorCode HT_DeleteEntry(int indexDesc, int id) {
 		memcpy(&next_block, data+sizeof(int), sizeof(int));
 	} else {
 		printf("Error: The id %d, could not be found\n", id);
-		return HT_ERROR;
+		return HT_OK;
 	}
 	
     }
