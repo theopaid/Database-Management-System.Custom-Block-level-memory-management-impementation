@@ -66,6 +66,7 @@ int main() {
 	// Create and Open
 	
 	int fd1;
+	int fd2;
 	char *data;
 	BF_Block *block;
 	BF_Block_Init(&block);
@@ -74,6 +75,11 @@ int main() {
 	CALL_OR_DIE(HT_CreateIndex(FILE_NAME, BUCKETS_NUM));
 	CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &fd1));
 	CALL_OR_DIE(HT_CloseFile(fd1));
+	CALL_OR_DIE(HT_OpenIndex(FILE_NAME, &fd2));
+	printf("%d\n", fd2);
+	BF_Block_Destroy(&block);
+	//CALL_OR_DIE(HT_CloseFile(fd1));
+	CALL_OR_DIE(HT_CloseFile(fd2));
 	CALL_OR_DIE(BF_Close());
 	
 
