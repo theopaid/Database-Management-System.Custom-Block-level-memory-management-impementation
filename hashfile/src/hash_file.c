@@ -246,7 +246,10 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
                                 flag = 1;
                         }
                 }
-                if (next_block != 0 ) {
+                if(flag == 1){
+			break;
+		}
+		if (next_block != 0 ) {
                         CALL_BF(BF_UnpinBlock(block));
                         CALL_BF(BF_GetBlock(indexDesc, next_block, block));
                         data = BF_Block_GetData(block);
