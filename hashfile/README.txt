@@ -59,4 +59,3 @@ Implementation:
 	decrease the number 'records' in the block. When a new record comes, it will be placed
 	inserted right on top of the record we 'deleted'. In other words, the record stays
 	in the bucket, but we don't see it and if a new one comes it will cover it.
-		 
