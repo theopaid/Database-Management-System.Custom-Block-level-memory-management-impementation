@@ -105,7 +105,7 @@ int main() {
         printf("RUN PrintAllEntries\n");
 	    printf("|||||||||||||||||||||||||||||||||  FILE %d  |||||||||||||||||||||||||||||||||\n", indexDesc);
         int id = rand() % RECORDS_NUM;
-        //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
+       // CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 
         printf("Delete Entry with id = %d\n" ,id);
