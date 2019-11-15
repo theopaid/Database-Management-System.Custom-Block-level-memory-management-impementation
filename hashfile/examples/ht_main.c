@@ -82,15 +82,15 @@ int main() {
         memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
         r = rand() % 10;
         memcpy(record.city, cities[r], strlen(cities[r]) + 1);
-        //printf("%s\n", record.city);
+        printf("%s\n", record.city);
 
         CALL_OR_DIE(HT_InsertEntry(indexDesc, record));
     }
 
     printf("RUN PrintAllEntries\n");
     int id = rand() % RECORDS_NUM;
-    CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
-    //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
+    //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
+    CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 
     printf("Delete Entry with id = %d\n" ,id);
     CALL_OR_DIE(HT_DeleteEntry(indexDesc, id));
