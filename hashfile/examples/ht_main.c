@@ -97,7 +97,7 @@ int main() {
     printf("Print Entry with id = %d\n", id); 
     CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id)); // must print something like : Entry doesn't exist or nothing at all
 
-    //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
+    CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
     CALL_OR_DIE(HT_CloseFile(indexDesc));
     BF_Close();
 }

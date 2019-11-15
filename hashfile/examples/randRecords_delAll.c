@@ -76,14 +76,12 @@ int main() {
     srand(time(NULL)); //randomize maximum buckets
 
     for(int i = 1; i <= MAX_OPEN_FILES; i++) {
-        maxBuckets = rand() % 20 + 2;
+        maxBuckets = rand() % 20 + 5;
         recordsNum = rand() % 2500 + 100;
         fileNameCounter++;
         snprintf(fileName, 10, "data%d.db", fileNameCounter);
-        printf("%s\n", fileName);
         CALL_OR_DIE(HT_CreateIndex(fileName, maxBuckets));
         CALL_OR_DIE(HT_OpenIndex(fileName, &indexDesc));
-        printf("maxBuckets=%d\n", maxBuckets);
 
         Record record;
         int r;
@@ -96,7 +94,6 @@ int main() {
             memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
             r = rand() % 10;
             memcpy(record.city, cities[r], strlen(cities[r]) + 1);
-            //printf("%s\n", record.city);
 
             CALL_OR_DIE(HT_InsertEntry(indexDesc, record));
         }

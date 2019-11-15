@@ -76,12 +76,9 @@ int main() {
     CALL_OR_DIE(HT_CreateIndex(fileName, maxBuckets));
 
     for(int i = 0; i < MAX_OPEN_FILES; i++) {
-        //maxBuckets = rand() % 20 + 1;
  
         printf("%s\n", fileName);
-        //CALL_OR_DIE(HT_CreateIndex(fileName, maxBuckets));
         CALL_OR_DIE(HT_OpenIndex(fileName, &indexDesc));
-        //printf("maxBuckets=%d\n", maxBuckets);
 
         if(i == 0) {
 
@@ -96,7 +93,6 @@ int main() {
                 memcpy(record.surname, surnames[r], strlen(surnames[r]) + 1);
                 r = rand() % 10;
                 memcpy(record.city, cities[r], strlen(cities[r]) + 1);
-                //printf("%s\n", record.city);
 
                 CALL_OR_DIE(HT_InsertEntry(indexDesc, record));
             }
@@ -105,14 +101,12 @@ int main() {
         printf("RUN PrintAllEntries\n");
 	    printf("|||||||||||||||||||||||||||||||||  FILE %d  |||||||||||||||||||||||||||||||||\n", indexDesc);
         int id = rand() % RECORDS_NUM;
-       // CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 
         printf("Delete Entry with id = %d\n" ,id);
         CALL_OR_DIE(HT_DeleteEntry(indexDesc, id));
         printf("Print Entry with id = %d\n", id); 
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id)); // must print something like : Entry doesn't exist or nothing at all
-        printf("max files %d\n", MAX_OPEN_FILES);
     }
 
     //Let's close one file and then add another
@@ -125,7 +119,6 @@ int main() {
     printf("RUN PrintAllEntries\n");
     printf("||||||||||||||||||||||||||||||||||||||  FILE: %d ||||||||||||||||||||||||||||||\n", indexDesc);
     int id = rand() % RECORDS_NUM;
-    //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
     CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 
     printf("Delete Entry with id = %d\n" ,id);
