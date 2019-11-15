@@ -76,7 +76,7 @@ int main() {
     srand(time(NULL)); //randomize maximum buckets
 
     for(int i = 1; i <= MAX_OPEN_FILES; i++) {
-        maxBuckets = rand() % 20 + 1;
+        maxBuckets = rand() % 20 + 2;
         recordsNum = rand() % 2500 + 100;
         fileNameCounter++;
         snprintf(fileName, 10, "data%d.db", fileNameCounter);
@@ -107,10 +107,12 @@ int main() {
         //CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id));
         CALL_OR_DIE(HT_PrintAllEntries(indexDesc, NULL));
 
-        printf("Delete Entry with id = %d\n" ,id);
-        CALL_OR_DIE(HT_DeleteEntry(indexDesc, id));
-        printf("Print Entry with id = %d\n", id); 
-        CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id)); // must print something like : Entry doesn't exist or nothing at all
+	if ( indexDesc != 19 ){
+   		printf("Delete Entry with id = %d\n" ,id);
+        	CALL_OR_DIE(HT_DeleteEntry(indexDesc, id));
+        	printf("Print Entry with id = %d\n", id); 
+        	CALL_OR_DIE(HT_PrintAllEntries(indexDesc, &id)); // must print something like : Entry doesn't exist or nothing at all
+	}
 
     }
 
@@ -120,6 +122,6 @@ int main() {
         printf("Print Entry with id = %d /%d\n", i, recordsNum-1);
         CALL_OR_DIE(HT_PrintAllEntries(19, &i));
     }
-
+    CALL_OR_DIE(BF_CloseFile(indexDesc));
     BF_Close();
 }
