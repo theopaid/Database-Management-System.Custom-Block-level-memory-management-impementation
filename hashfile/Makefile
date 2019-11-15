@@ -24,7 +24,7 @@ same_file:
 	
 randRecords_delAll.c:
 	@echo " Compile randRecords_delAll.c ..."
-	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/randRecords_delAll.c ./src/hash_file.c -lbf -o ./build/runner -O2
+	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/randRecords_delAll.c ./src/hash_file.c -lbf -o ./build/runner -O1
 
 clear:
 	@echo " Cleaning data files ...";
