@@ -70,7 +70,7 @@ HT_ErrorCode HT_CreateIndex(const char *fileName, int buckets) {
     }
     BF_Block_Destroy(&block);
     int blocks_num;
-    CALL_BF(BF_GetBlockCounter(file_desc, &blocks_num));
+    //CALL_BF(BF_GetBlockCounter(file_desc, &blocks_num));
     CALL_BF(BF_CloseFile(file_desc));
     
     return HT_OK;
@@ -241,6 +241,7 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
                 for( int i = 0; i < records; i++ ){
                         memcpy(record, data+sizeof(int)*2+sizeof(Record)*i, sizeof(Record));
                         if( record->id == *id ){
+				//printf("%d, %d, %d, %d\n", records, next_block, no_of_buckets, i);
                                 printf("(%d, %s, %s, %s)\n", record->id, record->name, record->surname, record->city);
                                 flag = 1;
                         }
@@ -255,6 +256,7 @@ HT_ErrorCode HT_PrintAllEntries(int indexDesc, int *id) {
                         printf("Couldn't find the key.\n");
                         free(record);
                         CALL_BF(BF_UnpinBlock(block));
+			BF_Block_Destroy(&block);
                         return HT_OK;
                 }
         }
