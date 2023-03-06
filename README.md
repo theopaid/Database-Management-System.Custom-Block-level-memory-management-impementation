@@ -44,3 +44,18 @@ Implementation:
 	We then insert it in that space and update the valure 'records' in the block.
 	If we don't find space for it, we allocate a new block, updating the last one to
 	correctly chain to the new one, and we insert the record to the new block.
+	
+	To Print all Entries with ID = NULL we run a print for every block in ascending order
+	of block Number (first the 1rst block, second the 2nd block, ...).
+	To Print all Entries with a given id, we find its hashing value, and we search for it
+	in the chain of blocks in the corrensponding bucket.
+	
+	To Delete an Entry we essentially find its id with the same way as in Print all Entries
+	and then: either that record is the only one, so we just decrease the records number 
+	in the block, or there are more records, so we get the last record remove it and place it in
+	the position of the record.
+	
+	In our implementation, we don't actually memset the space of the record, but just
+	decrease the number 'records' in the block. When a new record comes, it will be placed
+	inserted right on top of the record we 'deleted'. In other words, the record stays
+	in the bucket, but we don't see it and if a new one comes it will cover it.
